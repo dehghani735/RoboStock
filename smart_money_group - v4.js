@@ -1,5 +1,6 @@
 true == function()
 {
+	console.log("start");
 //***********************//
 // telegram_bot function //
 //***********************//
@@ -28,15 +29,17 @@ var code = {
 	pl: "9889",
 	pc: "128205",
 	bcI: "128372",
-	up: "129001",
-	down: "128997",
-	special: "128998",
+	green: "129001",
+	red: "128997",
+	blue: "128998",
 	moderateSpecial: "128993",
 	randeman: "128200",
 	bear: "128059",
 	bull: "128046",
 	cry: "128575",
-	smile: "128570"
+	smile: "128570",
+	asc: "10548",
+	des: "10549"
 }
 //***************************//
 // emoji in javascript       //
@@ -77,12 +80,14 @@ function getMinMaxIh(){
 	return {min, max}
 }
 
-function getBuyCountAvg() {
+function getTransCountAvg() {
+	var transAvg = 0;
 	if([ih] != undefined){
 		for(var i=0; i<20; ++i){
-
+			transAvg += [ih][i].QTotTran5J;
 		}
 	}
+	return transAvg;
 }
 
 function distFromAFinalPrice(firstPrice, finalPrice){
@@ -93,19 +98,19 @@ function isSignal(hour, minutes, seconds, p){
 	var power = 1.5;
 	var count = 40;
 	if(hour == 9 && minutes <= 5){
-		count = 40;
+		count = 30;
 	} else if(hour == 9 && minutes > 5 && minutes <= 10 ) {
 		count = 60;
 	} else if(hour == 9 && minutes > 10 && minutes <= 30 ) {
 		count = 100;
 	} else if(hour == 9 && minutes > 30) {
-		count = 200;
+		count = 150;
 	} else if(hour == 10 && minutes <= 30) {
-		count = 300;
+		count = 200;
 	} else if(hour == 10 && minutes > 30) {
-		count = 400;
+		count = 300;
 	} else {
-		count = 600;
+		count = 400;
 	}
 
 	// console.log((l18));
@@ -117,13 +122,21 @@ function isSignal(hour, minutes, seconds, p){
 	// console.log((pcp));
 	// console.log('---------------------------');
 
-	var zero = ((tmax) + (tmin))/2;
-	var domain = ((1 - ((tmin) / zero)) * 100).toFixed(2);
+	// var zero = ((tmax) + (tmin))/2;
+	// var domain = ((1 - ((tmin) / zero)) * 100).toFixed(2);
 
-	if((((pcp) + domain) <= 0.5) || ((plp) + domain <= 1)){
-		if((ct).Buy_CountI >= count && p >= power && ((plp) - (pcp)) < 2){
-			return {signal: true};
-		}
+	// if((((pcp) + domain) <= 0.5) || ((plp) + domain <= 1)){
+	// 	if((ct).Buy_CountI >= count && p >= power && ((plp) - (pcp)) < 2){
+	// 		return {signal: true};
+	// 	}
+	// }
+	var color = getProperColor();
+
+	if ((ct).Buy_CountI >= count && p >= power && color == emoji(code.blue)) {
+		return {signal: true};
+	}
+	if ((pmax) == (tmin) && p >= 1.2) {
+		return {signal: true};
 	}
 	return {signal: false};
 }
@@ -132,19 +145,23 @@ function getProperColor() {
 	var zero = ((tmax) + (tmin))/2;
 	var domain = ((1 - ((tmin) / zero)) * 100).toFixed(2);
 
-	if((((pcp) + domain) <= 0.5) || ((plp) + domain <= 1)){
-		return emoji(code.special)
+	if(((plp) + domain <= 2)){ 
+		return emoji(code.blue)
 	}
 
-	if ((((plp) + domain) > 1) || ((plp) + domain < 3)) {
-		return emoji(code.moderateSpecial)
+	if (((plp) + domain < 5)) {
+		return emoji(code.red)
 	}
+	return emoji(code.green)
+}
 
-	if((pl) <= (pc)){
-		return emoji(code.down)
-	}
+function getAscEmoji() {
+	if ((plp) >= (pcp)) 
+		return emoji(code.asc)
+	return emoji(code.des)
+}
 
-	return emoji(code.up)
+function getScore() {
 
 }
 
@@ -154,7 +171,7 @@ var sellEachPerson = ((((ct).Sell_I_Volume / (ct).Sell_CountI) * (pc))/10).toFix
 var zeroPrice = ((tmax) + (tmin))/2;
 var topReachedPrice = (((pmax) - zeroPrice)/(zeroPrice))*100;
 var bottomReachedPrice = (((pmin) - zeroPrice)/(zeroPrice))*100;
-
+(cfield0) = (plp);
 //*****************//
 var date = new Date();
 
@@ -172,46 +189,56 @@ if(localStorage.getItem("shouldReload") == null){
 }
 
 
-if(hour >= 9 && hour <= 23 && (minutes % 3 === 1)){
-	var endPart = "\n" + "**********************************" + "\n";
-	console.log(localStorage.getItem("shouldSeparate"));
-	if(localStorage.getItem("shouldSeparate") == "true"){
-		telegram_bot(encodeURIComponent(endPart));
-		localStorage.setItem("shouldSeparate", "false");
-		localStorage.setItem("shouldReload", "true");
-	}
-}
+// if(hour >= 9 && hour <= 23 && (minutes % 3 === 1)){
+// 	var endPart = "\n" + "**********************************" + "\n";
+// 	// console.log(localStorage.getItem("shouldSeparate"));
+// 	if(localStorage.getItem("shouldSeparate") == "true"){
+// 		telegram_bot(encodeURIComponent(endPart));
+// 		localStorage.setItem("shouldSeparate", "false");
+// 		localStorage.setItem("shouldReload", "true");
+// 	}
+// }
 
-if(hour >= 9 && hour <= 23 && (minutes % 3 === 2)){
-	console.log(localStorage.getItem("shouldReload"));
-	if(localStorage.getItem("shouldReload") == "true"){
-		location.reload();
-		localStorage.setItem("shouldSeparate", "true");
-		localStorage.setItem("shouldReload", "false");
-	}
+var currentTime = hour * 3600 + minutes * 60 + seconds;
+if (localStorage.getItem("previousTime") == null){
+	localStorage.setItem("previousTime", currentTime);
 }
+var previousTime = localStorage.getItem("previousTime");
 
-if (hour >= 9 && hour <= 23 && (minutes % 3 === 0))
+if(hour >= 9 && hour <= 12 && currentTime - previousTime > 20){
+	// console.log(localStorage.getItem("shouldReload"));
+	// var endPart = "\n" + "**********************************" + "\n";
+	// if(localStorage.getItem("shouldReload") == "true"){
+	// telegram_bot(encodeURIComponent(endPart));
+	// console.log('reloaded!!!!');
+	location.reload();
+		// localStorage.setItem("shouldSeparate", "true");
+		// localStorage.setItem("shouldReload", "false");
+	// }
+}
+localStorage.setItem("previousTime", currentTime);
+if (hour >= 9 && hour <= 12)
 {
 	if(hour == 12 && minutes > 45){
 		return false;
 	}
-	if ( (ct).Buy_CountI >= 10 && buyEachPerson >= 20000000 && (((pc) < (pl) && buyOnSell >= 1.2) || buyOnSell >= 1.5) && (pl)!=(tmax))
+	if ( (ct).Buy_CountI >= 10 && buyEachPerson >= 20000000 && buyOnSell >= 1.2 && (pl)!=(tmax))
 	{
 		if([ih] != undefined){
 			var randeman7 = ((([ih][0].PClosing - [ih][6].PClosing)/[ih][6].PClosing)*100).toFixed(0);
 			var randeman30 = ((([ih][0].PClosing - [ih][29].PClosing)/[ih][29].PClosing)*100).toFixed(0);
 			var randeman60 = ((([ih][0].PClosing - [ih][59].PClosing)/[ih][59].PClosing)*100).toFixed(0);
 			var minMaxPrice = getMinMaxIh();
-			var emj = getProperColor();
+			var colorEmj = getProperColor();
+			var ascEmj = getAscEmoji();
 			var sig = isSignal(hour, minutes, seconds, buyOnSell).signal;
 			var post_n = emoji(code.nemad) + " نماد : #" + (l18) + "\n" +
 					 emoji(code.buy) + " سرانه خرید هر نفر : " + (buyEachPerson/1000000).toFixed(0) + "\n" +
 					 emoji(code.power) + " قدرت خریدار به فروشنده : " + buyOnSell + "\n" +
 					 emoji(code.bcI) + " تعداد خریدار حقیقی : " + (ct).Buy_CountI + "\n" +
-					 emoji(code.bcI) + " میانگین تعداد خریدار حقیقی در ماه : " + (ct).Buy_CountI + "\n" +
-					 emoji(code.pc) + " قیمت پایانی : " + getProperNumberString((pcp)) + "\n" +
-					 emj + " قیمت لحظه ای : " + getProperNumberString((plp)) + "\n" +
+					 emoji(code.pc) + " نسبت حجم : " + ((tvol) / getTransCountAvg()) + "\n" +
+					 ascEmj + " قیمت پایانی : " + getProperNumberString((pcp)) + "\n" +
+					 colorEmj + " قیمت لحظه ای : " + getProperNumberString((plp)) + "\n" +
 					 emoji(code.cry) +  " کمترین : " + getProperNumberString((bottomReachedPrice).toFixed(2)) + "\n" +
 					 emoji(code.smile) + " بیشترین : " + getProperNumberString((topReachedPrice).toFixed(2)) + "\n" +
 					 // emoji(code.pc) + " کف دو ماهه : " + (minMaxPrice.min) + "\n" +
@@ -226,17 +253,19 @@ if (hour >= 9 && hour <= 23 && (minutes % 3 === 0))
 
 
 			var post = encodeURIComponent(post_n);
+			console.log('sent');
 			telegram_bot(post);
 			return true;
 		} else {
-			var emj = getProperColor();
+			var colorEmj = getProperColor();
+			var ascEmj = getAscEmoji();
 			var sig = isSignal(hour, minutes, seconds, buyOnSell).signal;
 			var post_n = emoji(code.nemad) + " نماد : #" + (l18) + "\n" +
 					 emoji(code.buy) + " سرانه خرید هر نفر : " + (buyEachPerson/1000000).toFixed(0) + "\n" +
 					 emoji(code.power) + " قدرت خریدار به فروشنده : " + buyOnSell + "\n" +
 					 emoji(code.bcI) + " تعداد خریدار حقیقی : " + (ct).Buy_CountI + "\n" +
-					 emoji(code.pc) + " قیمت پایانی : " + getProperNumberString((pcp)) + "\n" +
-					 emj + " قیمت لحظه ای : " + getProperNumberString((plp)) + "\n" +
+					 ascEmj + " قیمت پایانی : " + getProperNumberString((pcp)) + "\n" +
+					 colorEmj + " قیمت لحظه ای : " + getProperNumberString((plp)) + "\n" +
 					 emoji(code.cry) +  " کمترین : " + getProperNumberString((bottomReachedPrice).toFixed(2)) + "\n" +
 					 emoji(code.smile) + " بیشترین : " + getProperNumberString((topReachedPrice).toFixed(2)) + "\n" +
 					 // emoji(code.pc) + " کف دو ماهه : " + (minMaxPrice.min) + "\n" +
